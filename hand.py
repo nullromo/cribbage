@@ -63,12 +63,19 @@ class Hand:
             while smallest_rank + run_length in subset_ranks:
                 run_length += 1
             card_ranks = list(map(lambda x: x.rank, self.cards))
-            if run_length >= 3 and run_length == len(subset) and smallest_rank + run_length not in card_ranks and smallest_rank - 1 not in card_ranks:
+            if (run_length >= 3 and
+                run_length == len(subset) and
+                smallest_rank + run_length not in card_ranks and
+                smallest_rank - 1 not in card_ranks
+            ):
                 print('  run of ' + str(run_length))
                 points += run_length
 
         # count flushes
-        flush_suit = functools.reduce(lambda x, y: x if x == y else False, map(lambda x: x.suit, self.hand_cards))
+        flush_suit = functools.reduce(
+            lambda x, y: x if x == y else False,
+            map(lambda x: x.suit, self.hand_cards)
+        )
         cut_matches = self.cut_card.suit == flush_suit
         flush_points = 0
         if cut_matches:
@@ -80,7 +87,10 @@ class Hand:
             points += flush_points
 
         # count knob
-        if len([card for card in self.hand_cards if card.rank == 11 and card.suit == self.cut_card.suit]) > 0:
+        if len([card for card in self.hand_cards if
+            card.rank == 11 and
+            card.suit == self.cut_card.suit
+        ]) > 0:
             print('  knob')
             points += 1
 
