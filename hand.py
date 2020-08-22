@@ -39,7 +39,10 @@ class Hand:
         points = 0
 
         # all possible subsets of cards within the hand
-        subsets = functools.reduce(lambda x, y: list(x) + list(y), [itertools.combinations(self.cards, x + 1) for x in range(len(self.cards))])
+        subsets = functools.reduce(
+            lambda x, y: x + y,
+            [list(itertools.combinations(self.cards, x + 1)) for x in range(len(self.cards))]
+        )
 
         for subset in subsets:
             subset_ranks = list(map(lambda card: card.rank, list(subset)))
