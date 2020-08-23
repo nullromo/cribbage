@@ -52,6 +52,9 @@ class Card:
     def __repr__(self):
         return str(self)
 
+    def __lt__(self, other):
+        return self.rank < other.rank
+
 class Deck:
     """
     Represents a deck of cards.
