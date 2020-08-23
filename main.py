@@ -31,6 +31,7 @@ def check_win(player1, player2):
     if player2.points >= 121:
         winner = player2
     if winner:
+        print()
         print(player1.name + ' wins')
         sys.exit(0)
 
@@ -139,6 +140,7 @@ def main():
         # keep track of count points
         dealer_points = Hand(dealer.hand_cards, cut_card).count()
         pone_points = Hand(pone.hand_cards, cut_card).count()
+        crib_points = Hand(crib_cards, cut_card, True).count()
 
         # peg
         played_cards = []
@@ -180,17 +182,24 @@ def main():
                     check_win(dealer, pone)
                     player_to_play = other_player(player_to_play)
                     played_cards = []
+        print()
 
         # count
+        print(pone.name + ' counts ' + str(pone_points) + ' points.')
         pone.points += pone_points
         check_win(dealer, pone)
+
+        print(dealer.name + ' counts ' + str(dealer_points) + ' points.')
         dealer.points += dealer_points
         check_win(dealer, pone)
-        dealer.points += Hand(crib_cards, cut_card, True).count()
+
+        print(dealer.name + ' scores ' + str(crib_points) + ' points from the crib.')
+        dealer.points += crib_points
         check_win(dealer, pone)
 
         # new dealer
         dealer, pone = pone, dealer
+        print()
 
 if __name__ == '__main__':
     main()
