@@ -28,11 +28,13 @@ def check_win(player1, player2):
     winner = None
     if player1.points >= 121:
         winner = player1
-    if player2.points >= 121:
+    elif player2.points >= 121:
         winner = player2
+
     if winner:
         print()
         print(player1.name + ' wins')
+        print('Final score: ' + report_score(player1, player2))
         sys.exit(0)
 
 def count_peg_points(played_cards, verbose=False):
@@ -93,6 +95,30 @@ def count_peg_points(played_cards, verbose=False):
 
     return points
 
+def report_score(player1, player2):
+    """
+    Returns the score formatted nicely.
+    """
+    return ('[' +
+        player1.name +
+        ' [' +
+        str(player1.points) +
+        '|' +
+        str(player2.points) +
+        '] ' +
+        player2.name +
+        ']'
+    )
+
+def add_points(player, points, other_player, report=True):
+    """
+    Adds an amount of points to a player's score and reports
+    the scores if desired.
+    """
+    player.points += points
+    if report:
+        print('The score is now ' + report_score(player, other_player))
+
 def main():
     """
     Main.
@@ -133,8 +159,8 @@ def main():
         cut_card = deck.draw()
         print('The cut card is ' + str(cut_card) + '.')
         if cut_card.rank == 11:
-            print('heels')
-            dealer.points += 2
+            print(dealer.name + " receives 2 points for the Jack's heels.")
+            add_points(dealer, 2, other_player(dealer))
             check_win(dealer, pone)
 
         # keep track of count points
@@ -161,11 +187,11 @@ def main():
                 peg_points = count_peg_points(played_cards)
                 if peg_points != 0:
                     print(player_to_play.name + ' pegs ' + str(peg_points) + ' points.')
-                    player_to_play.points += peg_points
+                    add_points(player_to_play, peg_points, other_player(player_to_play))
                     check_win(dealer, pone)
                 if len(dealer.hand_cards) == 0 and len(pone.hand_cards) == 0:
                     print(player_to_play.name + ' receives a go.')
-                    player_to_play.points += 1
+                    add_points(player_to_play, 1, other_player(player_to_play))
                     check_win(dealer, pone)
                     break
                 if not passed:
@@ -178,7 +204,7 @@ def main():
                 else:
                     passed = None
                     print(player_to_play.name + ' receives a go.')
-                    player_to_play.points += 1
+                    add_points(player_to_play, 1, other_player(player_to_play))
                     check_win(dealer, pone)
                     player_to_play = other_player(player_to_play)
                     played_cards = []
@@ -186,15 +212,15 @@ def main():
 
         # count
         print(pone.name + ' counts ' + str(pone_points) + ' points.')
-        pone.points += pone_points
+        add_points(pone, pone_points, dealer, False)
         check_win(dealer, pone)
 
         print(dealer.name + ' counts ' + str(dealer_points) + ' points.')
-        dealer.points += dealer_points
+        add_points(dealer, dealer_points, pone, False)
         check_win(dealer, pone)
 
         print(dealer.name + ' scores ' + str(crib_points) + ' points from the crib.')
-        dealer.points += crib_points
+        add_points(dealer, crib_points, pone)
         check_win(dealer, pone)
 
         # new dealer
