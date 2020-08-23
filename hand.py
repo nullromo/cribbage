@@ -86,12 +86,12 @@ class Hand:
             print('  ' + str(flush_points) + '-card flush')
             points += flush_points
 
-        # count knob
+        # count nob
         if len([card for card in self.hand_cards if
             card.rank == 11 and
             card.suit == self.cut_card.suit
         ]) > 0:
-            print('  knob')
+            print('  nob')
             points += 1
 
         return points
