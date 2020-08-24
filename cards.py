@@ -39,7 +39,9 @@ class Card:
         self.value = min(rank, 10)
 
     def __str__(self):
-        if self.rank == 11:
+        if self.rank == 1:
+            name = 'A'
+        elif self.rank == 11:
             name = 'J'
         elif self.rank == 12:
             name = 'Q'
