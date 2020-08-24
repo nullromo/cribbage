@@ -3,7 +3,7 @@ Main runner for cribbage.
 """
 import sys
 from hand import Hand
-from cards import Deck#, Card, Suit, random_suit
+from cards import Deck#, Card, Suit
 from player import Player, HumanPlayer
 from util import log
 
@@ -85,9 +85,8 @@ def count_peg_points(played_cards, verbose=False):
     run_length = 0
     for i in range(1, len(played_cards) + 1):
         last_i_cards = played_cards[-i:]
-        if not run_exists(last_i_cards):
-            break
-        run_length = i
+        if run_exists(last_i_cards):
+            run_length = i
 
     if run_length >= 3:
         log(verbose, 'run of ' + str(run_length))
