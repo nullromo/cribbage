@@ -4,7 +4,7 @@ Main runner for cribbage.
 import sys
 from hand import Hand
 from cards import Deck#, Card, Suit, random_suit
-from player import Player
+from player import Player, HumanPlayer
 from util import log
 
 def deal(deck, player1, player2, number):
@@ -126,7 +126,7 @@ def main():
     print('Welcome to Cribbage.')
     print()
     dealer = Player('Player A')
-    pone = Player('Player B')
+    pone = HumanPlayer('Player B')
 
     print(dealer.name + ' is the dealer.')
     print(pone.name + ' is the pone.')
@@ -151,9 +151,14 @@ def main():
 
         # throw to crib
         print('Waiting for ' + dealer.name + ' to throw 2 cards to the crib...')
-        crib_cards += dealer.throw_to_crib()
+        dealer_threw = dealer.throw_to_crib(True)
+        print(dealer.name + ' threw ' + str(dealer_threw) + ' into the crib.')
+        crib_cards += dealer_threw
+
         print('Waiting for ' + pone.name + ' to throw 2 cards to the crib...')
-        crib_cards += pone.throw_to_crib()
+        pone_threw = pone.throw_to_crib(False)
+        print(pone.name + ' threw ' + str(pone_threw) + ' into the crib.')
+        crib_cards += pone_threw
 
         # cut
         cut_card = deck.draw()
