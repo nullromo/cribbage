@@ -17,6 +17,12 @@
   },
   "homepage": "https://github.com/nullromo/cribbage#readme",
   "devDependencies": {
+    "@types/node": "^16.10.2",
+    "@types/prompts": "^2.0.14",
     "typescript": "^4.4.3"
+  },
+  "dependencies": {
+    "js-combinatorics": "^1.5.4",
+    "prompts": "^2.4.1"
   }
 }
