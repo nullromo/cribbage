@@ -110,7 +110,9 @@ class CribbageGame {
 
         // count for runs
         const runExists = (cards: Card[]) => {
-            cards.sort();
+            cards.sort((a, b) => {
+                return a.rank - b.rank;
+            });
             let run = 0;
             for (const i of [...Array(cards.length - 1).keys()]) {
                 if (cards[i].rank + 1 != cards[i + 1].rank) {
