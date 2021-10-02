@@ -1,3 +1,5 @@
+/node_modules
+/build
+npm-debug.log*
 python/__pycache__/
-node_modules/
 Session.vim
