@@ -10,8 +10,11 @@ import { Util } from './util';
  */
 export class Suit {
     public static readonly SPADES = new Suit('♠', 'SPADES');
+
     public static readonly HEARTS = new Suit('♥', 'HEARTS');
+
     public static readonly DIAMONDS = new Suit('♦', 'DIAMONDS');
+
     public static readonly CLUBS = new Suit('♣', 'CLUBS');
 
     public static readonly SUITS = Object.freeze([

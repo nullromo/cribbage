@@ -66,12 +66,13 @@ export class Hand {
 
             // count runs
             const smallestRank = Math.min(...subsetRanks);
-            let runLength = 1;
-            while (
-                subsetRanks.some((rank) => {
+            const checkRun = (runLength: number) => {
+                return subsetRanks.some((rank) => {
                     return rank === smallestRank + runLength;
-                })
-            ) {
+                });
+            };
+            let runLength = 1;
+            while (checkRun(runLength)) {
                 runLength += 1;
             }
             if (

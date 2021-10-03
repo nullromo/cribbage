@@ -1,8 +1,7 @@
 /**
  * @brief Main runner for cribbage.
  */
-
-import { Card, Deck, Suit } from './cards';
+import { Card, Deck } from './cards';
 import { Hand } from './hand';
 import { HumanPlayer, Player } from './player';
 import { Util } from './util';
@@ -171,6 +170,7 @@ class CribbageGame {
             return dealer;
         };
 
+        /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
         while (true) {
             // reset
             let cribCards: Card[] = [];
@@ -188,6 +188,7 @@ class CribbageGame {
             console.log(
                 `Waiting for ${dealer.getName()} to throw 2 cards to the crib...`,
             );
+            /* eslint-disable-next-line no-await-in-loop */
             const dealerThrew = await dealer.throwToCrib(true);
             console.log(
                 `${dealer.getName()} threw ${dealerThrew} into the crib.`,
@@ -197,6 +198,7 @@ class CribbageGame {
             console.log(
                 `Waiting for ${pone.getName()} to throw 2 cards to the crib...`,
             );
+            /* eslint-disable-next-line no-await-in-loop */
             const poneThrew = await pone.throwToCrib(false);
             console.log(`${pone.getName()} threw ${poneThrew} into the crib.`);
             cribCards = [...cribCards, ...poneThrew];
@@ -224,10 +226,12 @@ class CribbageGame {
             let playedCards: Card[] = [];
             let playerToPlay: Player = pone;
             let passed = null;
+            /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
             while (true) {
                 console.log(
                     `Waiting for ${playerToPlay.getName()} to play a card...`,
                 );
+                /* eslint-disable-next-line no-await-in-loop */
                 const playedCard = await playerToPlay.playCard(playedCards);
                 if (playedCard) {
                     console.log(
@@ -271,25 +275,19 @@ class CribbageGame {
                     if (!passed) {
                         playerToPlay = otherPlayer(playerToPlay);
                     }
+                } else if (!passed) {
+                    console.log(
+                        `${playerToPlay.getName()} cannot play a card.`,
+                    );
+                    passed = playerToPlay;
+                    playerToPlay = otherPlayer(playerToPlay);
                 } else {
-                    if (!passed) {
-                        console.log(
-                            `${playerToPlay.getName()} cannot play a card.`,
-                        );
-                        passed = playerToPlay;
-                        playerToPlay = otherPlayer(playerToPlay);
-                    } else {
-                        passed = null;
-                        console.log(`${playerToPlay.getName()} receives a go.`);
-                        this.addPoints(
-                            playerToPlay,
-                            1,
-                            otherPlayer(playerToPlay),
-                        );
-                        this.checkWin(dealer, pone);
-                        playerToPlay = otherPlayer(playerToPlay);
-                        playedCards = [];
-                    }
+                    passed = null;
+                    console.log(`${playerToPlay.getName()} receives a go.`);
+                    this.addPoints(playerToPlay, 1, otherPlayer(playerToPlay));
+                    this.checkWin(dealer, pone);
+                    playerToPlay = otherPlayer(playerToPlay);
+                    playedCards = [];
                 }
             }
             console.log();
@@ -316,4 +314,4 @@ class CribbageGame {
     };
 }
 
-new CribbageGame().run();
+export class NetworkCribbageGame {}

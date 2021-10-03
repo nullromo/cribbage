@@ -26,8 +26,10 @@ const checkPlayable = (card: Card, playedCards: Card[]) => {
  */
 export class Player {
     private points;
+
     protected handCards: Card[];
-    public constructor(private name: string) {
+
+    public constructor(private readonly name: string) {
         this.points = 0;
         this.handCards = [
             new Card(Suit.HEARTS, 1),
@@ -57,6 +59,7 @@ export class Player {
     /**
      * @brief Takes 2 cards out of self.hand_cards and returns them as a list.
      */
+    /* eslint-disable-next-line @typescript-eslint/require-await */
     public readonly throwToCrib = async (_: boolean) => {
         if (this.handCards.length < 2) {
             throw new Error(
@@ -70,6 +73,7 @@ export class Player {
      * @brief Removes and returns a card from self.hand_cards if there is a
      * playable card. Otherwise, returns null (go).
      */
+    /* eslint-disable-next-line @typescript-eslint/require-await */
     public readonly playCard = async (playedCards: Card[]) => {
         const playableCardIndex = this.handCards.findIndex((card) => {
             return checkPlayable(card, playedCards);
@@ -111,9 +115,9 @@ export class HumanPlayer extends Player {
         });
         const index: number = (
             await prompts({
-                type: 'number',
-                name: 'index',
                 message: 'Choose',
+                name: 'index',
+                type: 'number',
                 validate: (value: number) => {
                     return (
                         (value >= 1 && value <= this.handCards.length) ||
@@ -135,6 +139,7 @@ export class HumanPlayer extends Player {
         for (const cardName of ['first', 'second']) {
             console.log();
             console.log(`Throw the ${cardName} card.`);
+            /* eslint-disable-next-line no-await-in-loop */
             cardsToThrow.push(await this.selectCard());
         }
         console.log();
@@ -148,6 +153,7 @@ export class HumanPlayer extends Player {
             if (checkPlayable(card, playedCards)) {
                 console.log();
                 console.log('Play a card.');
+                /* eslint-disable-next-line no-await-in-loop */
                 const selectedCard = await this.selectCard();
                 if (checkPlayable(selectedCard, playedCards)) {
                     return selectedCard;

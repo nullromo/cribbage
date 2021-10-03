@@ -29,6 +29,7 @@
     },
     "rules": {
         "no-await-in-loop": "error",
+        "no-constant-condition": "off",
         "no-debugger": "warn",
         "no-extra-semi": "off",
         "@typescript-eslint/no-extra-semi": ["error"],

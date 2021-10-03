@@ -1,8 +1,11 @@
-import React from "react";
-import "./App.css";
+import React from 'react';
+import './App.css';
+import { CribbageMain } from 'cribbageMain';
 
-function App() {
-  return <div>he</div>;
+class App extends React.Component {
+    public readonly render = () => {
+        return <CribbageMain />;
+    };
 }
 
 export default App;
