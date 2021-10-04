@@ -52,10 +52,30 @@ export class NetworkCribbageGame {
     private pone: Player = new Player('pone');
 
     public constructor() {
+        console.log('Welcome to Cribbage.');
+        console.log();
+        console.log(`${this.dealer.getName()} is the dealer.`);
+        console.log(`${this.pone.getName()} is the pone.`);
+        console.log('Shuffling deck.');
         this.deck.shuffle();
+        console.log('Dealing cards.');
         this.deal(this.deck, this.dealer, this.pone, 6);
+        console.log(
+            `Waiting for ${this.dealer.getName()} to throw 2 cards to the crib...`,
+        );
         this.gameState = CribbageGameState.AWAIT_THROW_TO_CRIB;
     }
+
+    private readonly getActivePlayer = () => {
+        return this.getPlayer(this.playerToPlay);
+    };
+
+    private readonly getPlayer = (player: PlayerIdentifier) => {
+        if (player === PlayerIdentifier.DEALER) {
+            return this.dealer;
+        }
+        return this.pone;
+    };
 
     public readonly throwToCrib = (player: PlayerIdentifier, threw: Card[]) => {
         if (this.gameState !== CribbageGameState.AWAIT_THROW_TO_CRIB) {
@@ -65,11 +85,22 @@ export class NetworkCribbageGame {
             return;
         }
 
+        console.log(
+            `${this.getPlayer(player).getName()} threw ${threw} into the crib.`,
+        );
         this.cribCards = [...this.cribCards, ...threw];
         this.playerToPlay = PlayerIdentifier.PONE;
-        if (player === PlayerIdentifier.PONE) {
+        if (player === PlayerIdentifier.DEALER) {
+            console.log(
+                `Waiting for ${this.pone.getName()} to throw 2 cards to the crib...`,
+            );
+        } else {
             this.cutCard = this.deck.draw();
+            console.log(`The cut card is ${this.cutCard}.`);
             if (this.cutCard.rank === 11) {
+                console.log(
+                    `${this.dealer.getName()} receives 2 points for the Jack's heels.`,
+                );
                 this.addPoints(PlayerIdentifier.DEALER, 2);
             }
             this.pendingPoints = {
@@ -90,6 +121,9 @@ export class NetworkCribbageGame {
             this.playedCards = [];
             this.playerToPlay = PlayerIdentifier.PONE;
             this.passed = null;
+            console.log(
+                `Waiting for ${this.getActivePlayer().getName()} to play a card...`,
+            );
             this.gameState = CribbageGameState.AWAIT_PLAY;
         }
     };
@@ -102,23 +136,52 @@ export class NetworkCribbageGame {
             return;
         }
 
+        console.log(`${this.getActivePlayer().getName()} plays ${playedCard}.`);
         this.playedCards.push(playedCard);
+        console.log(
+            `Cards in play: ${this.playedCards} (${this.playedCards
+                .map((card) => {
+                    return card.value;
+                })
+                .reduce((total, next) => {
+                    return total + next;
+                }, 0)}).`,
+        );
         const pegPoints = this.countPegPoints();
         if (pegPoints !== 0) {
+            console.log(
+                `${this.getActivePlayer().getName()} pegs ${pegPoints} points.`,
+            );
             this.addPoints(this.playerToPlay, pegPoints);
         }
         if (
             this.dealer.getHandCards().length === 0 &&
             this.pone.getHandCards().length === 0
         ) {
+            console.log(`${this.getActivePlayer().getName()} receives a go.`);
             this.addPoints(this.playerToPlay, 1);
+            console.log(
+                `${this.pone.getName()} counts ${
+                    this.pendingPoints.ponePoints
+                } points.`,
+            );
             this.addPoints(
                 PlayerIdentifier.PONE,
                 this.pendingPoints.ponePoints,
             );
+            console.log(
+                `${this.dealer.getName()} counts ${
+                    this.pendingPoints.dealerPoints
+                } points.`,
+            );
             this.addPoints(
                 PlayerIdentifier.DEALER,
                 this.pendingPoints.dealerPoints,
+            );
+            console.log(
+                `${this.dealer.getName()} scores ${
+                    this.pendingPoints.cribPoints
+                } points from the crib.`,
             );
             this.addPoints(
                 PlayerIdentifier.DEALER,
@@ -141,10 +204,14 @@ export class NetworkCribbageGame {
         }
 
         if (!this.passed) {
+            console.log(
+                `${this.getActivePlayer().getName()} cannot play a card.`,
+            );
             this.passed = player;
             this.playerToPlay = otherPlayer(player);
         } else {
             this.passed = null;
+            console.log(`${this.getActivePlayer().getName()} receives a go.`);
             this.addPoints(this.playerToPlay, 1);
             this.playerToPlay = otherPlayer(this.playerToPlay);
             this.playedCards = [];
