@@ -1,3 +1,4 @@
+import { assertUnreachable } from 'common/util';
 import { Card, Deck } from './cards';
 import { Hand } from './hand';
 import { Player } from './player';
@@ -12,8 +13,8 @@ enum CribbageGameState {
 enum PlayerIdentifier {
     DEALER,
     PONE,
-    NONE,
 }
+
 const otherPlayer = (player: PlayerIdentifier) => {
     switch (player) {
         case PlayerIdentifier.DEALER:
@@ -21,7 +22,7 @@ const otherPlayer = (player: PlayerIdentifier) => {
         case PlayerIdentifier.PONE:
             return PlayerIdentifier.DEALER;
         default:
-            return PlayerIdentifier.NONE;
+            return assertUnreachable(player);
     }
 };
 
@@ -44,7 +45,7 @@ export class NetworkCribbageGame {
 
     private playerToPlay = PlayerIdentifier.DEALER;
 
-    private passed = PlayerIdentifier.NONE;
+    private passed: PlayerIdentifier | null = null;
 
     private dealer: Player = new Player('dealer');
 
@@ -88,7 +89,7 @@ export class NetworkCribbageGame {
             };
             this.playedCards = [];
             this.playerToPlay = PlayerIdentifier.PONE;
-            this.passed = PlayerIdentifier.NONE;
+            this.passed = null;
             this.gameState = CribbageGameState.AWAIT_PLAY;
         }
     };
@@ -126,7 +127,7 @@ export class NetworkCribbageGame {
             [this.dealer, this.pone] = [this.pone, this.dealer];
             this.gameState = CribbageGameState.AWAIT_THROW_TO_CRIB;
             this.playerToPlay = PlayerIdentifier.DEALER;
-        } else if (this.passed === PlayerIdentifier.NONE) {
+        } else if (!this.passed) {
             this.playerToPlay = otherPlayer(this.playerToPlay);
         }
     };
@@ -139,11 +140,11 @@ export class NetworkCribbageGame {
             return;
         }
 
-        if (this.passed === PlayerIdentifier.NONE) {
+        if (!this.passed) {
             this.passed = player;
             this.playerToPlay = otherPlayer(player);
         } else {
-            this.passed = PlayerIdentifier.NONE;
+            this.passed = null;
             this.addPoints(this.playerToPlay, 1);
             this.playerToPlay = otherPlayer(this.playerToPlay);
             this.playedCards = [];
