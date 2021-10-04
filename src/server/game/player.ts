@@ -5,7 +5,6 @@ import { Card, Suit } from './cards';
 import prompts from 'prompts';
 import { Socket } from 'socket.io';
 import { serverEventNames } from 'common/events';
-import { NetworkCribbageGame } from './networkGame';
 
 /**
  * @brief Given a list of played cards, tells whether the given card is
@@ -186,6 +185,7 @@ export class SocketPlayer extends PlayerBase {
 
     public readonly on = (
         eventName: keyof typeof serverEventNames,
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         handler: (params: any) => void,
     ) => {
         return this.socket.on(eventName, handler);

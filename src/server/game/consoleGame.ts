@@ -6,7 +6,7 @@ import { Hand } from './hand';
 import { ConsolePlayer, Player } from './player';
 import { Util } from './util';
 
-class ConsoleCribbageGame {
+export class ConsoleCribbageGame {
     /**
      * Given a deck and 2 players, draws a number of cards from the deck and splits
      * them into 2 hands. Then gives the hands to the players.
