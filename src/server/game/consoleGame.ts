@@ -3,10 +3,10 @@
  */
 import { Card, Deck } from './cards';
 import { Hand } from './hand';
-import { HumanPlayer, Player } from './player';
+import { ConsolePlayer, Player } from './player';
 import { Util } from './util';
 
-class CribbageGame {
+class ConsoleCribbageGame {
     /**
      * Given a deck and 2 players, draws a number of cards from the deck and splits
      * them into 2 hands. Then gives the hands to the players.
@@ -158,7 +158,7 @@ class CribbageGame {
         console.log('Welcome to Cribbage.');
         console.log();
         let dealer: Player = new Player('Player A');
-        let pone: Player = new HumanPlayer('Player B');
+        let pone: Player = new ConsolePlayer('Player B');
 
         console.log(`${dealer.getName()} is the dealer.`);
         console.log(`${pone.getName()} is the pone.`);
@@ -313,5 +313,3 @@ class CribbageGame {
         }
     };
 }
-
-export class NetworkCribbageGame {}

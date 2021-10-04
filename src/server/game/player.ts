@@ -97,7 +97,7 @@ export class Player {
 /**
  * @brief Player that takes decisions from stdin.
  */
-export class HumanPlayer extends Player {
+export class ConsolePlayer extends Player {
     /**
      * @brief Allows a card to be selected from the player's hand.
      */
