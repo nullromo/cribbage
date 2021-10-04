@@ -3,6 +3,9 @@
  */
 import { Card, Suit } from './cards';
 import prompts from 'prompts';
+import { Socket } from 'socket.io';
+import { serverEventNames } from 'common/events';
+import { NetworkCribbageGame } from './networkGame';
 
 /**
  * @brief Given a list of played cards, tells whether the given card is
@@ -19,12 +22,7 @@ const checkPlayable = (card: Card, playedCards: Card[]) => {
     return count + card.value <= 31;
 };
 
-/**
- * @brief Represents a player in the game.
- *
- * The base player just makes random decisions for throwToCrib() and playCard().
- */
-export class Player {
+class PlayerBase {
     private points;
 
     protected handCards: Card[];
@@ -52,10 +50,25 @@ export class Player {
         return this.name;
     };
 
+    public readonly setHandCards = (cards: Card[]) => {
+        this.handCards = [...cards];
+    };
+
+    public readonly getHandCards = () => {
+        return [...this.handCards];
+    };
+
     public readonly toString = () => {
         return `${this.name} ${this.handCards} (${this.points})`;
     };
+}
 
+/**
+ * @brief Represents a player in the game.
+ *
+ * The base player just makes random decisions for throwToCrib() and playCard().
+ */
+export class Player extends PlayerBase {
     /**
      * @brief Takes 2 cards out of self.hand_cards and returns them as a list.
      */
@@ -83,14 +96,6 @@ export class Player {
         }
         const [removedCard] = this.handCards.splice(playableCardIndex, 1);
         return removedCard;
-    };
-
-    public readonly setHandCards = (cards: Card[]) => {
-        this.handCards = [...cards];
-    };
-
-    public readonly getHandCards = () => {
-        return [...this.handCards];
     };
 }
 
@@ -167,5 +172,22 @@ export class ConsolePlayer extends Player {
         }
         console.log('No playable cards left.');
         return null;
+    };
+}
+
+export class SocketPlayer extends PlayerBase {
+    public constructor(name: string, private readonly socket: Socket) {
+        super(name);
+    }
+
+    public readonly getSocketID = () => {
+        return this.socket.id;
+    };
+
+    public readonly on = (
+        eventName: keyof typeof serverEventNames,
+        handler: (params: any) => void,
+    ) => {
+        return this.socket.on(eventName, handler);
     };
 }

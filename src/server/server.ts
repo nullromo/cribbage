@@ -3,7 +3,8 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import { clientEventNames, serverEventNames } from '../common/events';
-import { NetworkCribbageGame } from './game/main';
+import { NetworkCribbageGame } from './game/networkGame';
+import { SocketPlayer } from './game/player';
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -61,8 +62,10 @@ io.on('connection', (socket) => {
 
     socket.on(serverEventNames.CREATE_GAME, () => {
         const gameCode = Math.random().toString(36).substring(2, 10);
+        const game = new NetworkCribbageGame();
+        game.addPlayer(new SocketPlayer('', socket));
         games[gameCode] = {
-            game: new NetworkCribbageGame(),
+            game,
             socketIDs: [socket.id],
         };
         socket.emit(clientEventNames.GAME_CREATED, { gameCode });

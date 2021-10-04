@@ -1,7 +1,8 @@
-import { assertUnreachable } from 'common/util';
+import { serverEventNames } from '../../common/events';
+import { assertUnreachable } from '../../common/util';
 import { Card, Deck } from './cards';
 import { Hand } from './hand';
-import { Player } from './player';
+import { SocketPlayer } from './player';
 import { Util } from './util';
 
 enum CribbageGameState {
@@ -47,11 +48,39 @@ export class NetworkCribbageGame {
 
     private passed: PlayerIdentifier | null = null;
 
-    private dealer: Player = new Player('dealer');
+    private dealer: SocketPlayer | null = null;
 
-    private pone: Player = new Player('pone');
+    private pone: SocketPlayer | null = null;
 
-    public constructor() {
+    public addPlayer(player: SocketPlayer) {
+        if (!this.dealer) {
+            console.log('Player 1 added.');
+            this.dealer = player;
+        } else if (!this.pone) {
+            console.log('Player 2 added.');
+            this.pone = player;
+            this.startGame();
+        } else {
+            console.log('Cannot add more than 2 players.');
+        }
+        player.on(serverEventNames.THROW_TO_CRIB, ({ threw }) => {
+            this.throwToCrib(player, threw);
+        });
+        player.on(serverEventNames.PLAY, ({ playedCard }) => {
+            this.play(player, playedCard);
+        });
+        player.on(serverEventNames.PASS, () => {
+            this.pass(player);
+        });
+    }
+
+    private readonly startGame = () => {
+        if (!this.dealer || !this.pone) {
+            throw new Error('Null player');
+        }
+        if (Math.random() > 0.5) {
+            [this.dealer, this.pone] = [this.pone, this.dealer];
+        }
         console.log('Welcome to Cribbage.');
         console.log();
         console.log(`${this.dealer.getName()} is the dealer.`);
@@ -64,33 +93,38 @@ export class NetworkCribbageGame {
             `Waiting for ${this.dealer.getName()} to throw 2 cards to the crib...`,
         );
         this.gameState = CribbageGameState.AWAIT_THROW_TO_CRIB;
-    }
+    };
 
     private readonly getActivePlayer = () => {
         return this.getPlayer(this.playerToPlay);
     };
 
     private readonly getPlayer = (player: PlayerIdentifier) => {
+        if (!this.dealer || !this.pone) {
+            throw new Error('Null player');
+        }
+
         if (player === PlayerIdentifier.DEALER) {
             return this.dealer;
         }
         return this.pone;
     };
 
-    public readonly throwToCrib = (player: PlayerIdentifier, threw: Card[]) => {
+    public readonly throwToCrib = (player: SocketPlayer, threw: Card[]) => {
         if (this.gameState !== CribbageGameState.AWAIT_THROW_TO_CRIB) {
             return;
         }
-        if (player !== this.playerToPlay) {
+        if (player !== this.getPlayer(this.playerToPlay)) {
             return;
         }
+        if (!this.dealer || !this.pone) {
+            throw new Error('Null player');
+        }
 
-        console.log(
-            `${this.getPlayer(player).getName()} threw ${threw} into the crib.`,
-        );
+        console.log(`${player.getName()} threw ${threw} into the crib.`);
         this.cribCards = [...this.cribCards, ...threw];
         this.playerToPlay = PlayerIdentifier.PONE;
-        if (player === PlayerIdentifier.DEALER) {
+        if (player === this.getPlayer(PlayerIdentifier.DEALER)) {
             console.log(
                 `Waiting for ${this.pone.getName()} to throw 2 cards to the crib...`,
             );
@@ -128,12 +162,15 @@ export class NetworkCribbageGame {
         }
     };
 
-    public readonly play = (player: PlayerIdentifier, playedCard: Card) => {
+    public readonly play = (player: SocketPlayer, playedCard: Card) => {
         if (this.gameState !== CribbageGameState.AWAIT_PLAY) {
             return;
         }
-        if (player !== this.playerToPlay) {
+        if (player !== this.getPlayer(this.playerToPlay)) {
             return;
+        }
+        if (!this.dealer || !this.pone) {
+            throw new Error('Null player');
         }
 
         console.log(`${this.getActivePlayer().getName()} plays ${playedCard}.`);
@@ -195,11 +232,11 @@ export class NetworkCribbageGame {
         }
     };
 
-    public readonly pass = (player: PlayerIdentifier) => {
+    public readonly pass = (player: SocketPlayer) => {
         if (this.gameState !== CribbageGameState.AWAIT_PLAY) {
             return;
         }
-        if (player !== this.playerToPlay) {
+        if (player !== this.getPlayer(this.playerToPlay)) {
             return;
         }
 
@@ -207,8 +244,12 @@ export class NetworkCribbageGame {
             console.log(
                 `${this.getActivePlayer().getName()} cannot play a card.`,
             );
-            this.passed = player;
-            this.playerToPlay = otherPlayer(player);
+            const playerIdentifier =
+                this.getPlayer(PlayerIdentifier.DEALER) === player
+                    ? PlayerIdentifier.DEALER
+                    : PlayerIdentifier.PONE;
+            this.passed = playerIdentifier;
+            this.playerToPlay = otherPlayer(playerIdentifier);
         } else {
             this.passed = null;
             console.log(`${this.getActivePlayer().getName()} receives a go.`);
@@ -298,6 +339,9 @@ export class NetworkCribbageGame {
     };
 
     private readonly reportScore = () => {
+        if (!this.dealer || !this.pone) {
+            throw new Error('Null player');
+        }
         return `[${this.dealer.getName()} [${this.dealer.getPoints()}|${this.pone.getPoints()}] ${this.pone.getName()}]`;
     };
 
@@ -306,6 +350,10 @@ export class NetworkCribbageGame {
         points: number,
         report = true,
     ) => {
+        if (!this.dealer || !this.pone) {
+            throw new Error('Null player');
+        }
+
         (player === PlayerIdentifier.DEALER
             ? this.dealer
             : this.pone
@@ -317,6 +365,10 @@ export class NetworkCribbageGame {
     };
 
     private readonly checkWin = () => {
+        if (!this.dealer || !this.pone) {
+            throw new Error('Null player');
+        }
+
         let winner = null;
         if (this.dealer.getPoints() >= 121) {
             winner = this.dealer;
@@ -334,8 +386,8 @@ export class NetworkCribbageGame {
 
     private readonly deal = (
         deck: Deck,
-        player1: Player,
-        player2: Player,
+        player1: SocketPlayer,
+        player2: SocketPlayer,
         amount: number,
     ) => {
         const hand1cards: Card[] = [];

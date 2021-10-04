@@ -1,9 +1,12 @@
 export enum serverEventNames {
-    CREATE_GAME = 'create-game',
-    JOIN_GAME = 'join-game',
+    CREATE_GAME = 'CREATE_GAME',
+    JOIN_GAME = 'JOIN_GAME',
+    THROW_TO_CRIB = 'THROW_TO_CRIB',
+    PLAY = 'PLAY',
+    PASS = 'PASS',
 }
 
 export enum clientEventNames {
-    GAME_CREATED = 'game-created',
-    GAME_JOIN_RESPONSE = 'game-join-response',
+    GAME_CREATED = 'GAME_CREATED',
+    GAME_JOIN_RESPONSE = 'GAME_JOIN_RESPONSE',
 }
