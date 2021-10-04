@@ -110,7 +110,10 @@ export class NetworkCribbageGame {
         return this.pone;
     };
 
-    public readonly throwToCrib = (player: SocketPlayer, threw: Card[]) => {
+    public readonly throwToCrib = (
+        player: SocketPlayer,
+        thrownCardNumbers: number[],
+    ) => {
         if (this.gameState !== CribbageGameState.AWAIT_THROW_TO_CRIB) {
             return;
         }
@@ -121,8 +124,12 @@ export class NetworkCribbageGame {
             throw new Error('Null player');
         }
 
-        console.log(`${player.getName()} threw ${threw} into the crib.`);
-        this.cribCards = [...this.cribCards, ...threw];
+        // TODO: validate that the numbers in `threw` are legal
+        // TODO: remove the cards from the player's hand and get them as a list
+        // const thrownCards = ?
+
+        console.log(`${player.getName()} threw ${thrownCards} into the crib.`);
+        this.cribCards = [...this.cribCards, ...thrownCards];
         this.playerToPlay = PlayerIdentifier.PONE;
         if (player === this.getPlayer(PlayerIdentifier.DEALER)) {
             console.log(
@@ -162,7 +169,7 @@ export class NetworkCribbageGame {
         }
     };
 
-    public readonly play = (player: SocketPlayer, playedCard: Card) => {
+    public readonly play = (player: SocketPlayer, playedCardNumber: number) => {
         if (this.gameState !== CribbageGameState.AWAIT_PLAY) {
             return;
         }
@@ -172,6 +179,10 @@ export class NetworkCribbageGame {
         if (!this.dealer || !this.pone) {
             throw new Error('Null player');
         }
+
+        // TODO: validate that the playedCard number is legal
+        // TODO: remove the card from the player's hand and get it as a Card
+        // const playedCard = ?
 
         console.log(`${this.getActivePlayer().getName()} plays ${playedCard}.`);
         this.playedCards.push(playedCard);
