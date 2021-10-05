@@ -1,3 +1,4 @@
+import { randomString } from '../common/util';
 import cors from 'cors';
 import express from 'express';
 import http from 'http';
@@ -60,10 +61,10 @@ io.on('connection', (socket) => {
         console.log(games);
     });
 
-    socket.on(serverEventNames.CREATE_GAME, () => {
-        const gameCode = Math.random().toString(36).substring(2, 10);
+    socket.on(serverEventNames.CREATE_GAME, ({ username }) => {
+        const gameCode = randomString();
         const game = new NetworkCribbageGame();
-        game.addPlayer(new SocketPlayer('', socket));
+        game.addPlayer(new SocketPlayer(username, socket));
         games[gameCode] = {
             game,
             socketIDs: [socket.id],
@@ -71,7 +72,7 @@ io.on('connection', (socket) => {
         socket.emit(clientEventNames.GAME_CREATED, { gameCode });
     });
 
-    socket.on(serverEventNames.JOIN_GAME, ({ gameCode }) => {
+    socket.on(serverEventNames.JOIN_GAME, ({ gameCode, username }) => {
         const game = games[gameCode];
         if (game) {
             if (game.socketIDs.length < 2) {
@@ -90,6 +91,7 @@ io.on('connection', (socket) => {
                         message: `Joined game ${gameCode}`,
                         success: true,
                     });
+                    game.game.addPlayer(new SocketPlayer(username, socket));
                 }
             } else {
                 socket.emit(clientEventNames.GAME_JOIN_RESPONSE, {

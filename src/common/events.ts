@@ -9,4 +9,5 @@ export enum serverEventNames {
 export enum clientEventNames {
     GAME_CREATED = 'GAME_CREATED',
     GAME_JOIN_RESPONSE = 'GAME_JOIN_RESPONSE',
+    GAME_STATE_UPDATE = 'GAME_STATE_UPDATE',
 }

@@ -4,7 +4,7 @@
 import { Card, Suit } from './cards';
 import prompts from 'prompts';
 import { Socket } from 'socket.io';
-import { serverEventNames } from 'common/events';
+import { clientEventNames, serverEventNames } from 'common/events';
 
 /**
  * @brief Given a list of played cards, tells whether the given card is
@@ -189,5 +189,13 @@ export class SocketPlayer extends PlayerBase {
         handler: (params: any) => void,
     ) => {
         return this.socket.on(eventName, handler);
+    };
+
+    public readonly emit = (
+        eventName: keyof typeof clientEventNames,
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        data: any,
+    ) => {
+        return this.socket.emit(eventName, data);
     };
 }

@@ -15,6 +15,7 @@
     "@types/react": "^17.0.26",
     "@types/react-dom": "^17.0.9",
     "axios": "^0.22.0",
+    "chalk": "^4.1.2",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "http": "^0.0.1-security",
