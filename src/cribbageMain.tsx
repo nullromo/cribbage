@@ -1,6 +1,7 @@
 import { clientEventNames, serverEventNames } from 'common/events';
 import { randomString } from 'common/util';
 import React from 'react';
+import { Card } from 'server/game/cards';
 import { io, Socket } from 'socket.io-client';
 
 type EmptyProps = Record<never, never>;
@@ -121,6 +122,7 @@ interface CribbageGameProps {
 
 interface CribbageGameState {
     gameLog: string[];
+    hand: Card[];
 }
 
 class CribbageGame extends React.Component<
@@ -131,15 +133,22 @@ class CribbageGame extends React.Component<
         super(props);
         this.state = {
             gameLog: [],
+            hand: [],
         };
     }
 
     public readonly componentDidMount = () => {
-        this.props.socket.on(clientEventNames.GAME_STATE_UPDATE, ({ log }) => {
-            this.setState({
-                gameLog: log,
-            });
-        });
+        this.props.socket.on(
+            clientEventNames.GAME_STATE_UPDATE,
+            ({ hand, log }) => {
+                this.setState({
+                    gameLog: log,
+                    hand: hand.map((card: Card) => {
+                        return Card.copy(card);
+                    }),
+                });
+            },
+        );
     };
 
     public readonly componentDidUpdate = () => {
@@ -154,6 +163,8 @@ class CribbageGame extends React.Component<
                 {`In game: ${this.props.gameCode}`}
                 <br />
                 {`Your name: ${this.props.username}`}
+                <br />
+                {`Your hand: ${this.state.hand}`}
                 <br />
                 <br />
                 <button
@@ -183,7 +194,11 @@ class CribbageGame extends React.Component<
                     className='message-box'
                 >
                     {this.state.gameLog.map((message, i) => {
-                        return <div key={i}>{message}</div>;
+                        return (
+                            <div key={i}>
+                                {message === '' ? '\u00A0' : message}
+                            </div>
+                        );
                     })}
                 </div>
             </>
