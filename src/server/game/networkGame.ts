@@ -123,10 +123,29 @@ export class NetworkCribbageGame {
         if (!this.dealer || !this.pone) {
             throw new Error('Null player');
         }
+        if (thrownCardNumbers.length !== 2) {
+            throw new Error('2 cards must be thrown');
+        }
+        const handCards = player.getHandCards();
+        thrownCardNumbers.forEach((cardNumber) => {
+            if (cardNumber < 1 || cardNumber > handCards.length) {
+                throw new Error('Invalid thrown card');
+            }
+        });
 
-        // TODO: validate that the numbers in `threw` are legal
-        // TODO: remove the cards from the player's hand and get them as a list
-        // const thrownCards = ?
+        const thrownCards = [
+            handCards[thrownCardNumbers[0]],
+            handCards[thrownCardNumbers[1]],
+        ];
+
+        player.setHandCards(
+            handCards.filter((_, i) => {
+                return (
+                    i + 1 !== thrownCardNumbers[0] &&
+                    i + 1 !== thrownCardNumbers[1]
+                );
+            }),
+        );
 
         console.log(`${player.getName()} threw ${thrownCards} into the crib.`);
         this.cribCards = [...this.cribCards, ...thrownCards];
@@ -179,10 +198,18 @@ export class NetworkCribbageGame {
         if (!this.dealer || !this.pone) {
             throw new Error('Null player');
         }
+        const handCards = player.getHandCards();
+        if (playedCardNumber < 1 || playedCardNumber > handCards.length) {
+            throw new Error('Invalid played card');
+        }
 
-        // TODO: validate that the playedCard number is legal
-        // TODO: remove the card from the player's hand and get it as a Card
-        // const playedCard = ?
+        const playedCard = handCards[playedCardNumber];
+
+        player.setHandCards(
+            handCards.filter((_, i) => {
+                return i + 1 !== playedCardNumber;
+            }),
+        );
 
         console.log(`${this.getActivePlayer().getName()} plays ${playedCard}.`);
         this.playedCards.push(playedCard);
