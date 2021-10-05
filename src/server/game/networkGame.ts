@@ -59,10 +59,20 @@ export class NetworkCribbageGame {
         this.dealer?.emit(clientEventNames.GAME_STATE_UPDATE, {
             hand: this.dealer.getHandCards(),
             log: this.gameLog,
+            playedCards: this.playedCards,
+            score: {
+                opponent: this.pone?.getPoints() ?? 0,
+                you: this.dealer.getPoints(),
+            },
         });
         this.pone?.emit(clientEventNames.GAME_STATE_UPDATE, {
             hand: this.pone.getHandCards(),
             log: this.gameLog,
+            playedCards: this.playedCards,
+            score: {
+                opponent: this.dealer?.getPoints() ?? 0,
+                you: this.pone.getPoints(),
+            },
         });
     };
 
@@ -460,11 +470,7 @@ export class NetworkCribbageGame {
         return `[${this.dealer.getName()} [${this.dealer.getPoints()}|${this.pone.getPoints()}] ${this.pone.getName()}]`;
     };
 
-    private readonly addPoints = (
-        player: PlayerIdentifier,
-        points: number,
-        report = true,
-    ) => {
+    private readonly addPoints = (player: PlayerIdentifier, points: number) => {
         if (!this.dealer || !this.pone) {
             throw new Error('Null player');
         }
@@ -473,9 +479,7 @@ export class NetworkCribbageGame {
             ? this.dealer
             : this.pone
         ).addPoints(points);
-        if (report) {
-            this.log(`The score is now ${this.reportScore()}`);
-        }
+        this.log(`The score is now ${this.reportScore()}`);
         this.checkWin();
     };
 
