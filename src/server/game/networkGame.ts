@@ -228,6 +228,8 @@ export class NetworkCribbageGame {
 
         const playedCard = handCards[playedCardNumber];
 
+        //TODO: check if card is playable (not over 31). Even better, don't give players options to pass. Just pass automatically
+
         player.setHandCards(
             handCards.filter((_, i) => {
                 return i !== playedCardNumber;

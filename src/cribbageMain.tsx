@@ -142,6 +142,12 @@ class CribbageGame extends React.Component<
         });
     };
 
+    public readonly componentDidUpdate = () => {
+        this.messageBox?.scrollTo({ top: this.messageBox.clientHeight });
+    };
+
+    private messageBox: HTMLDivElement | null = null;
+
     public readonly render = () => {
         return (
             <>
@@ -170,7 +176,12 @@ class CribbageGame extends React.Component<
                 >
                     test play
                 </button>
-                <div>
+                <div
+                    ref={(element) => {
+                        this.messageBox = element;
+                    }}
+                    className='message-box'
+                >
                     {this.state.gameLog.map((message, i) => {
                         return <div key={i}>{message}</div>;
                     })}
