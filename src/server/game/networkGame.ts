@@ -124,6 +124,7 @@ export class NetworkCribbageGame {
         }
 
         this.cribCards = [];
+        this.playedCards = [];
 
         this.log('Shuffling deck.');
         this.deck = new Deck();
@@ -221,7 +222,6 @@ export class NetworkCribbageGame {
                     this.cutCard,
                 ).count(),
             };
-            this.playedCards = [];
             this.playerToPlay = PlayerIdentifier.PONE;
             this.passed = null;
             this.log(
@@ -348,9 +348,9 @@ export class NetworkCribbageGame {
         } else {
             this.passed = null;
             this.log(`${this.getActivePlayer().getName()} receives a go.`);
+            this.playedCards = [];
             this.addPoints(this.playerToPlay, 1);
             this.playerToPlay = otherPlayer(this.playerToPlay);
-            this.playedCards = [];
         }
 
         const count = this.getCount();
