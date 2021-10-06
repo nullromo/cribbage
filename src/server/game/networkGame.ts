@@ -1,16 +1,11 @@
 import chalk from 'chalk';
+import { GameState } from '../../common/gameState';
 import { clientEventNames, serverEventNames } from '../../common/events';
 import { assertUnreachable } from '../../common/util';
 import { Card, Deck } from './cards';
 import { Hand } from './hand';
 import { SocketPlayer } from './player';
 import { Util } from './util';
-
-enum CribbageGameState {
-    SETUP,
-    AWAIT_THROW_TO_CRIB,
-    AWAIT_PLAY,
-}
 
 enum PlayerIdentifier {
     DEALER = 'dealer',
@@ -35,7 +30,7 @@ export class NetworkCribbageGame {
 
     private deck = new Deck();
 
-    private gameState = CribbageGameState.SETUP;
+    private gameState = GameState.SETUP;
 
     private cutCard: Card | null = null;
 
@@ -64,6 +59,10 @@ export class NetworkCribbageGame {
                 opponent: this.pone?.getPoints() ?? 0,
                 you: this.dealer.getPoints(),
             },
+            turn: {
+                state: this.gameState,
+                you: this.playerToPlay === PlayerIdentifier.DEALER,
+            },
         });
         this.pone?.emit(clientEventNames.GAME_STATE_UPDATE, {
             hand: this.pone.getHandCards(),
@@ -72,6 +71,10 @@ export class NetworkCribbageGame {
             score: {
                 opponent: this.dealer?.getPoints() ?? 0,
                 you: this.pone.getPoints(),
+            },
+            turn: {
+                state: this.gameState,
+                you: this.playerToPlay === PlayerIdentifier.PONE,
             },
         });
     };
@@ -131,10 +134,10 @@ export class NetworkCribbageGame {
         this.deck.shuffle();
         this.log('Dealing cards.');
         this.deal(this.deck, this.dealer, this.pone, 6);
+        this.gameState = GameState.AWAIT_THROW_TO_CRIB;
         this.log(
             `Waiting for ${this.dealer.getName()} to throw 2 cards to the crib...`,
         );
-        this.gameState = CribbageGameState.AWAIT_THROW_TO_CRIB;
     };
 
     private readonly getActivePlayer = () => {
@@ -156,8 +159,7 @@ export class NetworkCribbageGame {
         player: SocketPlayer,
         thrownCardNumbers: number[],
     ) => {
-        console.log('Got throw to crib event', thrownCardNumbers);
-        if (this.gameState !== CribbageGameState.AWAIT_THROW_TO_CRIB) {
+        if (this.gameState !== GameState.AWAIT_THROW_TO_CRIB) {
             this.log('You cannot throw cards into the crib right now');
             return;
         }
@@ -224,10 +226,10 @@ export class NetworkCribbageGame {
             };
             this.playerToPlay = PlayerIdentifier.PONE;
             this.passed = null;
+            this.gameState = GameState.AWAIT_PLAY;
             this.log(
                 `Waiting for ${this.getActivePlayer().getName()} to play a card...`,
             );
-            this.gameState = CribbageGameState.AWAIT_PLAY;
         }
     };
 
@@ -235,7 +237,7 @@ export class NetworkCribbageGame {
         player: SocketPlayer,
         playedCardNumber: number | null,
     ) => {
-        if (this.gameState !== CribbageGameState.AWAIT_PLAY) {
+        if (this.gameState !== GameState.AWAIT_PLAY) {
             this.log('You cannot play a card right now');
             return;
         }
@@ -246,16 +248,6 @@ export class NetworkCribbageGame {
         if (!this.dealer || !this.pone) {
             throw new Error('Null player');
         }
-
-        console.log(
-            'play',
-            'passed:',
-            this.passed,
-            'activePlayer:',
-            this.getActivePlayer().toString(),
-            'playedCardNumber:',
-            playedCardNumber,
-        );
 
         if (playedCardNumber !== null) {
             const handCards = player.getHandCards();
@@ -329,7 +321,7 @@ export class NetworkCribbageGame {
                     this.pendingPoints.cribPoints,
                 );
                 [this.dealer, this.pone] = [this.pone, this.dealer];
-                this.gameState = CribbageGameState.AWAIT_THROW_TO_CRIB;
+                this.gameState = GameState.AWAIT_THROW_TO_CRIB;
                 this.playerToPlay = PlayerIdentifier.DEALER;
                 this.setUpRound();
                 return;
@@ -355,7 +347,6 @@ export class NetworkCribbageGame {
 
         const count = this.getCount();
         const activePlayer = this.getActivePlayer();
-        console.log(`Player ${activePlayer} should play next`);
         if (
             activePlayer.getHandCards().filter((card) => {
                 return count + card.value <= 31;
@@ -378,6 +369,8 @@ export class NetworkCribbageGame {
                 this.play(activePlayer, forcedPlayIndex);
             }
         }
+
+        this.sendStateToPlayers();
     };
 
     private readonly getCount = () => {

@@ -11,7 +11,21 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         methods: ['GET', 'POST'],
-        origin: 'http://localhost:3000',
+        origin: (origin, callback) => {
+            if (
+                ['http://localhost:3000', 'http://157.131.141.217:3000'].some(
+                    (address) => {
+                        return origin === address;
+                    },
+                )
+            ) {
+                callback(null, true);
+            } else {
+                const message = `Address "${origin}" blocked by cors.`;
+                console.error(message);
+                callback(new Error(message));
+            }
+        },
     },
 });
 
