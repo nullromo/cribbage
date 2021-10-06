@@ -74,6 +74,10 @@ export class Card {
         this.value = Math.min(rank, 10);
     }
 
+    public static readonly copy = (card: Card) => {
+        return new Card(card.suit, card.rank);
+    };
+
     public readonly toString = () => {
         return `${(() => {
             switch (this.rank) {

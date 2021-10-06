@@ -13,8 +13,8 @@ enum CribbageGameState {
 }
 
 enum PlayerIdentifier {
-    DEALER,
-    PONE,
+    DEALER = 'dealer',
+    PONE = 'pone',
 }
 
 const otherPlayer = (player: PlayerIdentifier) => {
@@ -29,11 +29,11 @@ const otherPlayer = (player: PlayerIdentifier) => {
 };
 
 export class NetworkCribbageGame {
-    private gameLog: string[] = [];
+    private readonly gameLog: string[] = [];
 
     private cribCards: Card[] = [];
 
-    private readonly deck = new Deck();
+    private deck = new Deck();
 
     private gameState = CribbageGameState.SETUP;
 
@@ -57,15 +57,27 @@ export class NetworkCribbageGame {
 
     private readonly sendStateToPlayers = () => {
         this.dealer?.emit(clientEventNames.GAME_STATE_UPDATE, {
+            hand: this.dealer.getHandCards(),
             log: this.gameLog,
+            playedCards: this.playedCards,
+            score: {
+                opponent: this.pone?.getPoints() ?? 0,
+                you: this.dealer.getPoints(),
+            },
         });
         this.pone?.emit(clientEventNames.GAME_STATE_UPDATE, {
+            hand: this.pone.getHandCards(),
             log: this.gameLog,
+            playedCards: this.playedCards,
+            score: {
+                opponent: this.dealer?.getPoints() ?? 0,
+                you: this.pone.getPoints(),
+            },
         });
     };
 
     private readonly log = (message?: string) => {
-        console.log(`Logged: ${chalk.blueBright(message)}`);
+        console.log(`Logged: ${chalk.blueBright(message ?? '')}`);
         this.gameLog.push(message ?? '');
         this.sendStateToPlayers();
     };
@@ -82,13 +94,12 @@ export class NetworkCribbageGame {
             this.log('Cannot add more than 2 players.');
         }
         player.on(serverEventNames.THROW_TO_CRIB, ({ thrownCardNumbers }) => {
+            console.log(`Got throw to crib event from ${player}`);
             this.throwToCrib(player, thrownCardNumbers);
         });
         player.on(serverEventNames.PLAY, ({ playedCardNumber }) => {
+            console.log(`Got play event from ${player}`);
             this.play(player, playedCardNumber);
-        });
-        player.on(serverEventNames.PASS, () => {
-            this.pass(player);
         });
     };
 
@@ -96,6 +107,7 @@ export class NetworkCribbageGame {
         if (!this.dealer || !this.pone) {
             throw new Error('Null player');
         }
+
         if (Math.random() > 0.5) {
             [this.dealer, this.pone] = [this.pone, this.dealer];
         }
@@ -103,7 +115,19 @@ export class NetworkCribbageGame {
         this.log();
         this.log(`${this.dealer.getName()} is the dealer.`);
         this.log(`${this.pone.getName()} is the pone.`);
+        this.setUpRound();
+    };
+
+    private readonly setUpRound = () => {
+        if (!this.dealer || !this.pone) {
+            throw new Error('Null player');
+        }
+
+        this.cribCards = [];
+        this.playedCards = [];
+
         this.log('Shuffling deck.');
+        this.deck = new Deck();
         this.deck.shuffle();
         this.log('Dealing cards.');
         this.deal(this.deck, this.dealer, this.pone, 6);
@@ -198,7 +222,6 @@ export class NetworkCribbageGame {
                     this.cutCard,
                 ).count(),
             };
-            this.playedCards = [];
             this.playerToPlay = PlayerIdentifier.PONE;
             this.passed = null;
             this.log(
@@ -208,7 +231,10 @@ export class NetworkCribbageGame {
         }
     };
 
-    public readonly play = (player: SocketPlayer, playedCardNumber: number) => {
+    public readonly play = (
+        player: SocketPlayer,
+        playedCardNumber: number | null,
+    ) => {
         if (this.gameState !== CribbageGameState.AWAIT_PLAY) {
             this.log('You cannot play a card right now');
             return;
@@ -220,92 +246,98 @@ export class NetworkCribbageGame {
         if (!this.dealer || !this.pone) {
             throw new Error('Null player');
         }
-        const handCards = player.getHandCards();
-        if (playedCardNumber < 0 || playedCardNumber > handCards.length - 1) {
-            this.log('Invalid played card');
-            return;
-        }
 
-        const playedCard = handCards[playedCardNumber];
-
-        //TODO: check if card is playable (not over 31). Even better, don't give players options to pass. Just pass automatically
-
-        player.setHandCards(
-            handCards.filter((_, i) => {
-                return i !== playedCardNumber;
-            }),
+        console.log(
+            'play',
+            'passed:',
+            this.passed,
+            'activePlayer:',
+            this.getActivePlayer().toString(),
+            'playedCardNumber:',
+            playedCardNumber,
         );
 
-        this.log(`${this.getActivePlayer().getName()} plays ${playedCard}.`);
-        this.playedCards.push(playedCard);
-        this.log(
-            `Cards in play: ${this.playedCards} (${this.playedCards
-                .map((card) => {
-                    return card.value;
-                })
-                .reduce((total, next) => {
-                    return total + next;
-                }, 0)}).`,
-        );
-        const pegPoints = this.countPegPoints();
-        if (pegPoints !== 0) {
+        if (playedCardNumber !== null) {
+            const handCards = player.getHandCards();
+            if (
+                playedCardNumber < 0 ||
+                playedCardNumber > handCards.length - 1
+            ) {
+                this.log('Invalid played card');
+                return;
+            }
+
+            const playedCard = handCards[playedCardNumber];
+
+            player.setHandCards(
+                handCards.filter((_, i) => {
+                    return i !== playedCardNumber;
+                }),
+            );
+
             this.log(
-                `${this.getActivePlayer().getName()} pegs ${pegPoints} points.`,
+                `${this.getActivePlayer().getName()} plays ${playedCard}.`,
             );
-            this.addPoints(this.playerToPlay, pegPoints);
-        }
-        if (
-            this.dealer.getHandCards().length === 0 &&
-            this.pone.getHandCards().length === 0
-        ) {
-            this.log(`${this.getActivePlayer().getName()} receives a go.`);
-            this.addPoints(this.playerToPlay, 1);
+            this.playedCards.push(playedCard);
             this.log(
-                `${this.pone.getName()} counts ${
-                    this.pendingPoints.ponePoints
-                } points.`,
+                `Cards in play: ${this.playedCards} (${this.playedCards
+                    .map((card) => {
+                        return card.value;
+                    })
+                    .reduce((total, next) => {
+                        return total + next;
+                    }, 0)}).`,
             );
-            this.addPoints(
-                PlayerIdentifier.PONE,
-                this.pendingPoints.ponePoints,
-            );
-            this.log(
-                `${this.dealer.getName()} counts ${
-                    this.pendingPoints.dealerPoints
-                } points.`,
-            );
-            this.addPoints(
-                PlayerIdentifier.DEALER,
-                this.pendingPoints.dealerPoints,
-            );
-            this.log(
-                `${this.dealer.getName()} scores ${
-                    this.pendingPoints.cribPoints
-                } points from the crib.`,
-            );
-            this.addPoints(
-                PlayerIdentifier.DEALER,
-                this.pendingPoints.cribPoints,
-            );
-            [this.dealer, this.pone] = [this.pone, this.dealer];
-            this.gameState = CribbageGameState.AWAIT_THROW_TO_CRIB;
-            this.playerToPlay = PlayerIdentifier.DEALER;
+            const pegPoints = this.countPegPoints();
+            if (pegPoints !== 0) {
+                this.log(
+                    `${this.getActivePlayer().getName()} pegs ${pegPoints} points.`,
+                );
+                this.addPoints(this.playerToPlay, pegPoints);
+            }
+            if (
+                this.dealer.getHandCards().length === 0 &&
+                this.pone.getHandCards().length === 0
+            ) {
+                this.log(`${this.getActivePlayer().getName()} receives a go.`);
+                this.addPoints(this.playerToPlay, 1);
+                this.log(
+                    `${this.pone.getName()} counts ${
+                        this.pendingPoints.ponePoints
+                    } points.`,
+                );
+                this.addPoints(
+                    PlayerIdentifier.PONE,
+                    this.pendingPoints.ponePoints,
+                );
+                this.log(
+                    `${this.dealer.getName()} counts ${
+                        this.pendingPoints.dealerPoints
+                    } points.`,
+                );
+                this.addPoints(
+                    PlayerIdentifier.DEALER,
+                    this.pendingPoints.dealerPoints,
+                );
+                this.log(
+                    `${this.dealer.getName()} scores ${
+                        this.pendingPoints.cribPoints
+                    } points from the crib.`,
+                );
+                this.addPoints(
+                    PlayerIdentifier.DEALER,
+                    this.pendingPoints.cribPoints,
+                );
+                [this.dealer, this.pone] = [this.pone, this.dealer];
+                this.gameState = CribbageGameState.AWAIT_THROW_TO_CRIB;
+                this.playerToPlay = PlayerIdentifier.DEALER;
+                this.setUpRound();
+                return;
+            }
+            if (!this.passed) {
+                this.playerToPlay = otherPlayer(this.playerToPlay);
+            }
         } else if (!this.passed) {
-            this.playerToPlay = otherPlayer(this.playerToPlay);
-        }
-    };
-
-    public readonly pass = (player: SocketPlayer) => {
-        if (this.gameState !== CribbageGameState.AWAIT_PLAY) {
-            this.log('You cannot pass right now');
-            return;
-        }
-        if (player !== this.getPlayer(this.playerToPlay)) {
-            this.log(`${player.getName()}: it is not your turn.`);
-            return;
-        }
-
-        if (!this.passed) {
             this.log(`${this.getActivePlayer().getName()} cannot play a card.`);
             const playerIdentifier =
                 this.getPlayer(PlayerIdentifier.DEALER) === player
@@ -316,21 +348,51 @@ export class NetworkCribbageGame {
         } else {
             this.passed = null;
             this.log(`${this.getActivePlayer().getName()} receives a go.`);
+            this.playedCards = [];
             this.addPoints(this.playerToPlay, 1);
             this.playerToPlay = otherPlayer(this.playerToPlay);
-            this.playedCards = [];
+        }
+
+        const count = this.getCount();
+        const activePlayer = this.getActivePlayer();
+        console.log(`Player ${activePlayer} should play next`);
+        if (
+            activePlayer.getHandCards().filter((card) => {
+                return count + card.value <= 31;
+            }).length < 2
+        ) {
+            const forcedPlayIndex = activePlayer
+                .getHandCards()
+                .findIndex((card) => {
+                    return count + card.value <= 31;
+                });
+            if (forcedPlayIndex === -1) {
+                console.log(`Player ${activePlayer} is forced to pass`);
+                this.play(activePlayer, null);
+            } else {
+                console.log(
+                    `Player ${activePlayer} is forced to play index ${forcedPlayIndex} = ${
+                        activePlayer.getHandCards()[forcedPlayIndex]
+                    }`,
+                );
+                this.play(activePlayer, forcedPlayIndex);
+            }
         }
     };
 
-    private readonly countPegPoints = (verbose = false) => {
-        let points = 0;
-        const count = this.playedCards
+    private readonly getCount = () => {
+        return this.playedCards
             .map((card) => {
                 return card.value;
             })
             .reduce((total, next) => {
                 return total + next;
             }, 0);
+    };
+
+    private readonly countPegPoints = (verbose = false) => {
+        let points = 0;
+        const count = this.getCount();
 
         // count for 15
         if (count == 15) {
@@ -408,11 +470,7 @@ export class NetworkCribbageGame {
         return `[${this.dealer.getName()} [${this.dealer.getPoints()}|${this.pone.getPoints()}] ${this.pone.getName()}]`;
     };
 
-    private readonly addPoints = (
-        player: PlayerIdentifier,
-        points: number,
-        report = true,
-    ) => {
+    private readonly addPoints = (player: PlayerIdentifier, points: number) => {
         if (!this.dealer || !this.pone) {
             throw new Error('Null player');
         }
@@ -421,9 +479,7 @@ export class NetworkCribbageGame {
             ? this.dealer
             : this.pone
         ).addPoints(points);
-        if (report) {
-            this.log(`The score is now ${this.reportScore()}`);
-        }
+        this.log(`The score is now ${this.reportScore()}`);
         this.checkWin();
     };
 
