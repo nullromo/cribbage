@@ -72,10 +72,10 @@ export class NetworkCribbageGame {
 
     public readonly addPlayer = (player: SocketPlayer) => {
         if (!this.dealer) {
-            this.log('Player 1 added.');
+            this.log(`Player 1 added: ${player.getName()}.`);
             this.dealer = player;
         } else if (!this.pone) {
-            this.log('Player 2 added.');
+            this.log(`Player 2 added: ${player.getName()}.`);
             this.pone = player;
             this.startGame();
         } else {
