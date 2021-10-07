@@ -7,10 +7,23 @@ import { Socket } from 'socket.io-client';
 interface CardSelectorProps {
     numberOfCards: number;
     submit: (data: { thrownCardNumbers: number[] }) => void;
-    //TODO: add state for selected cards
 }
 
-class CardSelector extends React.Component<CardSelectorProps> {
+interface CardSelectorState {
+    selected: number[];
+}
+
+class CardSelector extends React.Component<
+    CardSelectorProps,
+    CardSelectorState
+> {
+    public constructor(props: CardSelectorProps) {
+        super(props);
+        this.state = {
+            selected: [],
+        };
+    }
+
     public readonly render = () => {
         return (
             <tr>
@@ -20,11 +33,17 @@ class CardSelector extends React.Component<CardSelectorProps> {
                             <input
                                 type='checkbox'
                                 onChange={(event) => {
-                                    console.log(
-                                        'change',
-                                        i,
-                                        event.target.checked,
-                                    );
+                                    this.setState((previousState) => {
+                                        return {
+                                            selected: event.target.checked
+                                                ? [...previousState.selected, i]
+                                                : previousState.selected.filter(
+                                                      (item) => {
+                                                          return item !== i;
+                                                      },
+                                                  ),
+                                        };
+                                    });
                                 }}
                             />
                         </td>
@@ -34,7 +53,9 @@ class CardSelector extends React.Component<CardSelectorProps> {
                     <button
                         type='button'
                         onClick={() => {
-                            this.props.submit({ thrownCardNumbers: [0, 1] });
+                            this.props.submit({
+                                thrownCardNumbers: this.state.selected,
+                            });
                         }}
                     >
                         Throw
@@ -106,7 +127,7 @@ export class CribbageGame extends React.Component<
     };
 
     public readonly componentDidUpdate = () => {
-        this.messageBox?.scrollTo({ top: this.messageBox.clientHeight });
+        this.messageBox?.scrollTo({ top: this.messageBox.scrollHeight });
     };
 
     private messageBox: HTMLDivElement | null = null;
