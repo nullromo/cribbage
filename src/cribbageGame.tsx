@@ -75,6 +75,7 @@ interface CribbageGameProps {
 interface CribbageGameState {
     dealer: boolean;
     gameLog: string[];
+    gameOver: boolean;
     hand: Card[];
     playedCards: Card[];
     score: {
@@ -96,6 +97,7 @@ export class CribbageGame extends React.Component<
         this.state = {
             dealer: false,
             gameLog: [],
+            gameOver: false,
             hand: [],
             playedCards: [],
             score: {
@@ -127,6 +129,9 @@ export class CribbageGame extends React.Component<
                 });
             },
         );
+        this.props.socket.on(clientEventNames.GAME_END, () => {
+            this.setState({ gameOver: true });
+        });
     };
 
     public readonly componentDidUpdate = () => {
@@ -146,75 +151,103 @@ export class CribbageGame extends React.Component<
                 <br />
                 {`Opponent's score: ${this.state.score.opponent}`}
                 <br />
-                {`Cards in play: ${
-                    this.state.playedCards
-                } (count = ${this.state.playedCards.reduce((total, next) => {
-                    return total + next.value;
-                }, 0)})`}
-                <br />
-                {`Dealer: ${this.state.dealer ? 'you' : 'opponent'}`}
-                <br />
-                {this.state.turn.you ? 'Your turn' : "Opponent's turn"}
-                <br />
-                <table>
-                    <tbody>
-                        <tr>
-                            {this.state.hand.map((card, i) => {
-                                return <td key={i}>{card.toString()}</td>;
-                            })}
-                        </tr>
-                        {(() => {
-                            if (!this.state.turn.you) {
-                                return null;
-                            }
+                {this.state.gameOver ? (
+                    <>
+                        {'Game over '}
+                        <button
+                            type='button'
+                            onClick={() => {
+                                console.log('home');
+                                //TODO
+                            }}
+                        >
+                            Home
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        {`Cards in play: ${
+                            this.state.playedCards
+                        } (count = ${this.state.playedCards.reduce(
+                            (total, next) => {
+                                return total + next.value;
+                            },
+                            0,
+                        )})`}
+                        <br />
+                        {`Dealer: ${this.state.dealer ? 'you' : 'opponent'}`}
+                        <br />
+                        {this.state.turn.you ? 'Your turn' : "Opponent's turn"}
+                        <br />
+                        <table>
+                            <tbody>
+                                <tr>
+                                    {this.state.hand.map((card, i) => {
+                                        return (
+                                            <td key={i}>{card.toString()}</td>
+                                        );
+                                    })}
+                                </tr>
+                                {(() => {
+                                    if (!this.state.turn.you) {
+                                        return null;
+                                    }
 
-                            switch (this.state.turn.state) {
-                                case GameState.AWAIT_PLAY:
-                                    return (
-                                        <tr>
-                                            {this.state.hand.map((_, i) => {
-                                                return (
-                                                    <td key={i}>
-                                                        <button
-                                                            type='button'
-                                                            onClick={() => {
-                                                                this.props.socket.emit(
-                                                                    serverEventNames.PLAY,
-                                                                    {
-                                                                        playedCardNumber:
-                                                                            i,
-                                                                    },
-                                                                );
-                                                            }}
-                                                        >
-                                                            play
-                                                        </button>
-                                                    </td>
-                                                );
-                                            })}
-                                        </tr>
-                                    );
-                                case GameState.AWAIT_THROW_TO_CRIB:
-                                    return (
-                                        <CardSelector
-                                            numberOfCards={
-                                                this.state.hand.length
-                                            }
-                                            submit={({ thrownCardNumbers }) => {
-                                                this.props.socket.emit(
-                                                    serverEventNames.THROW_TO_CRIB,
-                                                    { thrownCardNumbers },
-                                                );
-                                            }}
-                                        />
-                                    );
+                                    switch (this.state.turn.state) {
+                                        case GameState.AWAIT_PLAY:
+                                            return (
+                                                <tr>
+                                                    {this.state.hand.map(
+                                                        (_, i) => {
+                                                            return (
+                                                                <td key={i}>
+                                                                    <button
+                                                                        type='button'
+                                                                        onClick={() => {
+                                                                            this.props.socket.emit(
+                                                                                serverEventNames.PLAY,
+                                                                                {
+                                                                                    playedCardNumber:
+                                                                                        i,
+                                                                                },
+                                                                            );
+                                                                        }}
+                                                                    >
+                                                                        play
+                                                                    </button>
+                                                                </td>
+                                                            );
+                                                        },
+                                                    )}
+                                                </tr>
+                                            );
+                                        case GameState.AWAIT_THROW_TO_CRIB:
+                                            return (
+                                                <CardSelector
+                                                    numberOfCards={
+                                                        this.state.hand.length
+                                                    }
+                                                    submit={({
+                                                        thrownCardNumbers,
+                                                    }) => {
+                                                        this.props.socket.emit(
+                                                            serverEventNames.THROW_TO_CRIB,
+                                                            {
+                                                                thrownCardNumbers,
+                                                            },
+                                                        );
+                                                    }}
+                                                />
+                                            );
 
-                                default:
-                                    return null;
-                            }
-                        })()}
-                    </tbody>
-                </table>
+                                        default:
+                                            return null;
+                                    }
+                                })()}
+                            </tbody>
+                        </table>
+                    </>
+                )}
                 <br />
                 <div
                     ref={(element) => {

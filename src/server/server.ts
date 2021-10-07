@@ -38,6 +38,10 @@ type GameMapEntry = {
 
 let games: Partial<Record<string, GameMapEntry>> = {};
 
+export const deleteGame = (gameCode: string) => {
+    games[gameCode] = undefined;
+};
+
 server.listen(3001, () => {
     console.log('Express server is running');
 });
@@ -77,7 +81,7 @@ io.on('connection', (socket) => {
 
     socket.on(serverEventNames.CREATE_GAME, ({ username }) => {
         const gameCode = randomString();
-        const game = new NetworkCribbageGame();
+        const game = new NetworkCribbageGame(gameCode);
         game.addPlayer(new SocketPlayer(username, socket));
         games[gameCode] = {
             game,

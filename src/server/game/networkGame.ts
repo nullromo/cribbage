@@ -6,6 +6,7 @@ import { Card, Deck } from './cards';
 import { Hand } from './hand';
 import { SocketPlayer } from './player';
 import { Util } from './util';
+import { deleteGame } from 'server/server';
 
 enum PlayerIdentifier {
     DEALER = 'dealer',
@@ -24,6 +25,10 @@ const otherPlayer = (player: PlayerIdentifier) => {
 };
 
 export class NetworkCribbageGame {
+    public constructor(private readonly gameCode: string) {
+        //
+    }
+
     private readonly gameLog: string[] = [];
 
     private cribCards: Card[] = [];
@@ -485,9 +490,9 @@ export class NetworkCribbageGame {
         }
 
         let winner = null;
-        if (this.dealer.getPoints() >= 121) {
+        if (this.dealer.getPoints() >= 12 /*121*/) {
             winner = this.dealer;
-        } else if (this.pone.getPoints() >= 121) {
+        } else if (this.pone.getPoints() >= 12 /*121*/) {
             winner = this.pone;
         }
 
@@ -496,7 +501,9 @@ export class NetworkCribbageGame {
             this.log(`${this.dealer.getName()} wins`);
             this.log(`Final score: ${this.reportScore()}`);
             this.sendStateToPlayers();
-            //TODO: somehow clean up the game on the server side
+            this.dealer.emit(clientEventNames.GAME_END);
+            this.pone.emit(clientEventNames.GAME_END);
+            deleteGame(this.gameCode);
         }
     };
 

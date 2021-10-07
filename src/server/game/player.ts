@@ -194,7 +194,7 @@ export class SocketPlayer extends PlayerBase {
     public readonly emit = (
         eventName: keyof typeof clientEventNames,
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        data: any,
+        data: any = {},
     ) => {
         return this.socket.emit(eventName, data);
     };
