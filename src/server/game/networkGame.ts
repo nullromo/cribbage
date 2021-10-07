@@ -195,7 +195,7 @@ export class NetworkCribbageGame {
             }),
         );
 
-        this.log(`${player.getName()} threw ${thrownCards} into the crib.`);
+        this.log(`${player.getName()} threw 2 cards into the crib.`);
         this.cribCards = [...this.cribCards, ...thrownCards];
         this.playerToPlay = PlayerIdentifier.PONE;
         if (player === this.getPlayer(PlayerIdentifier.DEALER)) {
