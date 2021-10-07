@@ -52,6 +52,7 @@ export class NetworkCribbageGame {
 
     private readonly sendStateToPlayers = () => {
         this.dealer?.emit(clientEventNames.GAME_STATE_UPDATE, {
+            dealer: true,
             hand: this.dealer.getHandCards(),
             log: this.gameLog,
             playedCards: this.playedCards,
@@ -65,6 +66,7 @@ export class NetworkCribbageGame {
             },
         });
         this.pone?.emit(clientEventNames.GAME_STATE_UPDATE, {
+            dealer: false,
             hand: this.pone.getHandCards(),
             log: this.gameLog,
             playedCards: this.playedCards,

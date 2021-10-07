@@ -73,6 +73,7 @@ interface CribbageGameProps {
 }
 
 interface CribbageGameState {
+    dealer: boolean;
     gameLog: string[];
     hand: Card[];
     playedCards: Card[];
@@ -93,6 +94,7 @@ export class CribbageGame extends React.Component<
     public constructor(props: CribbageGameProps) {
         super(props);
         this.state = {
+            dealer: false,
             gameLog: [],
             hand: [],
             playedCards: [],
@@ -110,8 +112,9 @@ export class CribbageGame extends React.Component<
     public readonly componentDidMount = () => {
         this.props.socket.on(
             clientEventNames.GAME_STATE_UPDATE,
-            ({ hand, log, playedCards, score, turn }) => {
+            ({ dealer, hand, log, playedCards, score, turn }) => {
                 this.setState({
+                    dealer,
                     gameLog: log,
                     hand: hand.map((card: Card) => {
                         return Card.copy(card);
@@ -149,7 +152,7 @@ export class CribbageGame extends React.Component<
                     return total + next.value;
                 }, 0)})`}
                 <br />
-                {`Your hand: ${this.state.hand}`}
+                {`Dealer: ${this.state.dealer ? 'you' : 'opponent'}`}
                 <br />
                 {this.state.turn.you ? 'Your turn' : "Opponent's turn"}
                 <br />
@@ -222,7 +225,9 @@ export class CribbageGame extends React.Component<
                     {this.state.gameLog.map((message, i) => {
                         return (
                             <div key={i}>
-                                {message === '' ? '\u00A0' : message}
+                                {message === ''
+                                    ? '\u00A0' /*non-breaking space*/
+                                    : message}
                             </div>
                         );
                     })}
