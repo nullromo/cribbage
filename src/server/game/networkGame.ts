@@ -474,7 +474,8 @@ export class NetworkCribbageGame {
             ? this.dealer
             : this.pone
         ).addPoints(points);
-        this.log(`The score is now ${this.reportScore()}`);
+        //this.log(`The score is now ${this.reportScore()}`);
+        this.sendStateToPlayers();
         this.checkWin();
     };
 
@@ -494,7 +495,8 @@ export class NetworkCribbageGame {
             this.log();
             this.log(`${this.dealer.getName()} wins`);
             this.log(`Final score: ${this.reportScore()}`);
-            process.exit(0);
+            this.sendStateToPlayers();
+            //TODO: somehow clean up the game on the server side
         }
     };
 
